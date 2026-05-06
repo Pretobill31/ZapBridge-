@@ -5,49 +5,36 @@ const app = express();
 
 app.use(express.json());
 
-// Configuração do cliente WhatsApp
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        executablePath: '/usr/bin/google-chrome', // Caminho padrão do Render
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-extensions']
     }
 });
 
-// Exibe o QR Code no Log do Render
 client.on('qr', (qr) => {
-    console.log('--- ZAPBRIDGE: ESCANEIE O QR CODE ABAIXO ---');
+    console.log('--- ESCANEIE O QR CODE ABAIXO ---');
     qrcode.generate(qr, { small: true });
 });
 
-// Aviso de conexão
 client.on('ready', () => {
-    console.log('ZapBridge está ONLINE e conectado! ✅');
+    console.log('ZapBridge ONLINE! ✅');
 });
 
-// Rota POST para receber dados do Requex.me
-// O link final será: https://seu-app.onrender.com/enviar
 app.post('/enviar', async (req, res) => {
     const { telefone, mensagem } = req.body;
-
-    if (!telefone || !mensagem) {
-        return res.status(400).send({ error: "Faltam dados (telefone ou mensagem)" });
-    }
-
     try {
-        // Formata o número para o padrão do WhatsApp
         const chatId = telefone.includes('@c.us') ? telefone : `${telefone}@c.us`;
         await client.sendMessage(chatId, mensagem);
-        
-        console.log(`Mensagem enviada para ${telefone}`);
-        res.status(200).send({ status: "Sucesso!", enviada: true });
+        res.status(200).send({ status: "Sucesso!" });
     } catch (error) {
-        console.error("Erro ao enviar:", error);
-        res.status(500).send({ error: "Falha no envio", detalhe: error.message });
+        res.status(500).send({ error: error.message });
     }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     client.initialize();
-    console.log(`Servidor ZapBridge rodando na porta ${PORT}`);
+    console.log(`Rodando na porta ${PORT}`);
 });
