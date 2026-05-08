@@ -7,7 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// SUA API KEY GEMINI
+// SUA API GEMINI
 const API_KEY = "AIzaSyB21sXHAu4sCqd4cpm-S3LTMbZN9kZGxf8";
 
 // ROTA PRINCIPAL
@@ -17,7 +17,6 @@ app.get("/", (req, res) => {
 
 // WEBHOOK
 app.post("/webhook", async (req, res) => {
-
   try {
 
     const nome = req.body.nome || "Cliente";
@@ -28,7 +27,7 @@ app.post("/webhook", async (req, res) => {
 
     // CHAMANDO GEMINI
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
       {
         method: "POST",
         headers: {
@@ -50,7 +49,8 @@ app.post("/webhook", async (req, res) => {
 
     const data = await response.json();
 
-    console.log(data);
+    // MOSTRAR ERRO REAL NO LOG
+    console.log(JSON.stringify(data, null, 2));
 
     const resposta =
       data?.candidates?.[0]?.content?.parts?.[0]?.text ||
@@ -63,19 +63,19 @@ app.post("/webhook", async (req, res) => {
 
   } catch (err) {
 
+    console.log("ERRO GERAL:");
     console.log(err);
 
     res.status(500).json({
-      erro: "Erro na IA"
+      erro: "Erro interno no servidor"
     });
 
   }
-
 });
 
 // INICIAR SERVIDOR
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log("Servidor rodando na porta " + PORT);
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
