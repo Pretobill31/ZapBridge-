@@ -7,15 +7,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// API KEY SEGURA DO RENDER
-const API_KEY = process.env.GEMINI_API_KEY;
+// API KEY GROQ
+const API_KEY = process.env.GROQ_API_KEY;
 
 // ROTA PRINCIPAL
 app.get("/", (req, res) => {
   res.send("ZapBridge IA Online 🚀");
 });
 
-// WEBHOOK IA
+// WEBHOOK
 app.post("/webhook", async (req, res) => {
 
   try {
@@ -27,22 +27,25 @@ app.post("/webhook", async (req, res) => {
     console.log(nome);
     console.log(mensagem);
 
-    // CHAMADA GEMINI
+    // CHAMADA GROQ
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`,
+      "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
         headers: {
+          "Authorization": `Bearer ${API_KEY}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          contents: [
+          model: "llama-3.3-70b-versatile",
+          messages: [
             {
-              parts: [
-                {
-                  text: `Responda como um atendente profissional e amigável para ${nome}: ${mensagem}`
-                }
-              ]
+              role: "system",
+              content: "Você é um atendente profissional, amigável e rápido."
+            },
+            {
+              role: "user",
+              content: `Cliente ${nome}: ${mensagem}`
             }
           ]
         })
@@ -53,11 +56,11 @@ app.post("/webhook", async (req, res) => {
 
     console.log(JSON.stringify(data, null, 2));
 
-    // PEGAR RESPOSTA DA IA
+    // RESPOSTA IA
     const resposta =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      data?.choices?.[0]?.message?.content;
 
-    // SE A IA FALHAR
+    // SE DER ERRO
     if (!resposta) {
 
       return res.status(500).json({
@@ -67,7 +70,7 @@ app.post("/webhook", async (req, res) => {
 
     }
 
-    // RESPOSTA FINAL
+    // SUCESSO
     res.json({
       status: "ok",
       resposta
