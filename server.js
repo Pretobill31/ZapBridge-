@@ -8,7 +8,7 @@ app.use(cors());
 app.use(express.json());
 
 // SUA API KEY GEMINI
-const API_KEY = "AIzaSyC8O0wQ9FBhyKpmASkc0pm2VcCn5WhoRc8";
+const API_KEY = "AIzaSyB21sXHAu4sCqd4cpm-S3LTMbZN9kZGxf8";
 
 // ROTA PRINCIPAL
 app.get("/", (req, res) => {
