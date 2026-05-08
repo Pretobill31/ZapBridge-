@@ -7,14 +7,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const API_KEY = "AIzaSyDoZ40ZY1EVXq5k_Lj4fbIHUuc8hT93h_E";
+// API KEY SEGURA DO RENDER
+const API_KEY = process.env.GEMINI_API_KEY;
 
 // ROTA PRINCIPAL
 app.get("/", (req, res) => {
   res.send("ZapBridge IA Online 🚀");
 });
 
-// WEBHOOK
+// WEBHOOK IA
 app.post("/webhook", async (req, res) => {
 
   try {
@@ -23,9 +24,10 @@ app.post("/webhook", async (req, res) => {
     const mensagem = req.body.mensagem || "Olá";
 
     console.log("Mensagem recebida:");
-    console.log(nome, mensagem);
+    console.log(nome);
+    console.log(mensagem);
 
-    // REQUISIÇÃO GEMINI
+    // CHAMADA GEMINI
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
       {
@@ -38,7 +40,7 @@ app.post("/webhook", async (req, res) => {
             {
               parts: [
                 {
-                  text: `Responda como um atendente profissional para ${nome}: ${mensagem}`
+                  text: `Responda como um atendente profissional e amigável para ${nome}: ${mensagem}`
                 }
               ]
             }
@@ -51,11 +53,11 @@ app.post("/webhook", async (req, res) => {
 
     console.log(JSON.stringify(data, null, 2));
 
-    // RESPOSTA IA
+    // PEGAR RESPOSTA DA IA
     const resposta =
       data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    // SE DER ERRO
+    // SE A IA FALHAR
     if (!resposta) {
 
       return res.status(500).json({
@@ -73,6 +75,7 @@ app.post("/webhook", async (req, res) => {
 
   } catch (err) {
 
+    console.log("ERRO:");
     console.log(err);
 
     res.status(500).json({
