@@ -7,8 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// SUA API GEMINI
-const API_KEY = "AIzaSyB21sXHAu4sCqd4cpm-S3LTMbZN9kZGxf8";
+const API_KEY = "AIzaSyDoZ40ZY1EVXq5k_Lj4fbIHUuc8hT93h_E";
 
 // ROTA PRINCIPAL
 app.get("/", (req, res) => {
@@ -17,6 +16,7 @@ app.get("/", (req, res) => {
 
 // WEBHOOK
 app.post("/webhook", async (req, res) => {
+
   try {
 
     const nome = req.body.nome || "Cliente";
@@ -25,7 +25,7 @@ app.post("/webhook", async (req, res) => {
     console.log("Mensagem recebida:");
     console.log(nome, mensagem);
 
-    // CHAMANDO GEMINI
+    // REQUISIÇÃO GEMINI
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`,
       {
@@ -38,7 +38,7 @@ app.post("/webhook", async (req, res) => {
             {
               parts: [
                 {
-                  text: `Responda como um atendimento profissional para o cliente ${nome}: ${mensagem}`
+                  text: `Responda como um atendente profissional para ${nome}: ${mensagem}`
                 }
               ]
             }
@@ -49,13 +49,23 @@ app.post("/webhook", async (req, res) => {
 
     const data = await response.json();
 
-    // MOSTRAR ERRO REAL NO LOG
     console.log(JSON.stringify(data, null, 2));
 
+    // RESPOSTA IA
     const resposta =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "Erro ao gerar resposta";
+      data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
+    // SE DER ERRO
+    if (!resposta) {
+
+      return res.status(500).json({
+        status: "erro",
+        detalhes: data
+      });
+
+    }
+
+    // SUCESSO
     res.json({
       status: "ok",
       resposta
@@ -63,17 +73,18 @@ app.post("/webhook", async (req, res) => {
 
   } catch (err) {
 
-    console.log("ERRO GERAL:");
     console.log(err);
 
     res.status(500).json({
-      erro: "Erro interno no servidor"
+      status: "erro",
+      mensagem: "Erro interno no servidor"
     });
 
   }
+
 });
 
-// INICIAR SERVIDOR
+// START SERVIDOR
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
