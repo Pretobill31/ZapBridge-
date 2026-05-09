@@ -10,7 +10,7 @@ app.use(express.json());
 // API KEY GROQ
 const API_KEY = process.env.GROQ_API_KEY;
 
-// HISTÓRICO TEMPORÁRIO
+// HISTÓRICO
 const historico = [];
 
 // ROTA PRINCIPAL
@@ -30,7 +30,15 @@ app.post("/webhook", async (req, res) => {
     console.log(nome);
     console.log(mensagem);
 
-    // CHAMADA IA GROQ
+    // HISTÓRICO CONTEXTO
+    const contexto = historico
+      .slice(-5)
+      .map(item =>
+        `Usuário: ${item.mensagem}\nIA: ${item.resposta}`
+      )
+      .join("\n");
+
+    // CHAMADA IA
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -44,13 +52,34 @@ app.post("/webhook", async (req, res) => {
           messages: [
             {
               role: "system",
-              content: "Você é um atendente profissional, amigável e rápido."
+              content: `
+Você é a IA oficial do ZapBridge.
+
+Regras:
+- Responda de forma humana e natural
+- Não repita sempre a mesma saudação
+- Seja inteligente
+- Responda exatamente o que o usuário perguntou
+- Seja útil e moderna
+- Respostas curtas e profissionais
+- Fale português do Brasil
+
+Contexto anterior:
+${contexto}
+              `
             },
             {
               role: "user",
-              content: `Cliente ${nome}: ${mensagem}`
+              content: `
+Usuário: ${nome}
+
+Mensagem:
+${mensagem}
+              `
             }
-          ]
+          ],
+          temperature: 0.9,
+          max_tokens: 500
         })
       }
     );
@@ -59,7 +88,7 @@ app.post("/webhook", async (req, res) => {
 
     console.log(JSON.stringify(data, null, 2));
 
-    // PEGAR RESPOSTA IA
+    // RESPOSTA IA
     const resposta =
       data?.choices?.[0]?.message?.content;
 
@@ -89,19 +118,18 @@ app.post("/webhook", async (req, res) => {
 
   } catch (err) {
 
-    console.log("ERRO:");
     console.log(err);
 
     res.status(500).json({
       status: "erro",
-      mensagem: "Erro interno no servidor"
+      mensagem: "Erro interno servidor"
     });
 
   }
 
 });
 
-// VER HISTÓRICO
+// HISTÓRICO
 app.get("/historico", (req, res) => {
 
   res.json({
@@ -111,9 +139,9 @@ app.get("/historico", (req, res) => {
 
 });
 
-// START SERVIDOR
+// START
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+  console.log(`Servidor rodando porta ${PORT}`);
 });
