@@ -10,12 +10,15 @@ app.use(express.json());
 // API KEY GROQ
 const API_KEY = process.env.GROQ_API_KEY;
 
+// HISTÓRICO TEMPORÁRIO
+const historico = [];
+
 // ROTA PRINCIPAL
 app.get("/", (req, res) => {
   res.send("ZapBridge IA Online 🚀");
 });
 
-// WEBHOOK
+// WEBHOOK IA
 app.post("/webhook", async (req, res) => {
 
   try {
@@ -27,7 +30,7 @@ app.post("/webhook", async (req, res) => {
     console.log(nome);
     console.log(mensagem);
 
-    // CHAMADA GROQ
+    // CHAMADA IA GROQ
     const response = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -56,11 +59,11 @@ app.post("/webhook", async (req, res) => {
 
     console.log(JSON.stringify(data, null, 2));
 
-    // RESPOSTA IA
+    // PEGAR RESPOSTA IA
     const resposta =
       data?.choices?.[0]?.message?.content;
 
-    // SE DER ERRO
+    // ERRO IA
     if (!resposta) {
 
       return res.status(500).json({
@@ -69,6 +72,14 @@ app.post("/webhook", async (req, res) => {
       });
 
     }
+
+    // SALVAR HISTÓRICO
+    historico.push({
+      nome,
+      mensagem,
+      resposta,
+      data: new Date()
+    });
 
     // SUCESSO
     res.json({
@@ -87,6 +98,16 @@ app.post("/webhook", async (req, res) => {
     });
 
   }
+
+});
+
+// VER HISTÓRICO
+app.get("/historico", (req, res) => {
+
+  res.json({
+    total: historico.length,
+    conversas: historico
+  });
 
 });
 
